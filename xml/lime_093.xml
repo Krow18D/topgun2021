@@ -1,0 +1,26 @@
+<annotation>
+	<folder>image</folder>
+	<filename>lime_093.jpg</filename>
+	<path>/Users/krxw/Me/TGR15/im/image/lime_093.jpg</path>
+	<source>
+		<database>Unknown</database>
+	</source>
+	<size>
+		<width>800</width>
+		<height>800</height>
+		<depth>3</depth>
+	</size>
+	<segmented>0</segmented>
+	<object>
+		<name>lime</name>
+		<pose>Unspecified</pose>
+		<truncated>0</truncated>
+		<difficult>0</difficult>
+		<bndbox>
+			<xmin>367</xmin>
+			<ymin>405</ymin>
+			<xmax>514</xmax>
+			<ymax>550</ymax>
+		</bndbox>
+	</object>
+</annotation>
