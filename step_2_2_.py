@@ -2,6 +2,7 @@ import cv2
 import numpy as np
 import tensorflow as tf
 import os
+import time
 from step_2_2_problem import *
 
 
@@ -20,6 +21,7 @@ if __name__ == '__main__':
     }
     Entry = False
     factor_size = 0.769
+    start_time = time.time()
     while True:
         # capture image
         ret,raw_img = cap.read()
@@ -88,4 +90,6 @@ if __name__ == '__main__':
         if key == ord('q'):
             break
     cap.release()
+    end_time = time.time()
+    print("time used : " , end_time - start_time)
     print_result(categoryList)
