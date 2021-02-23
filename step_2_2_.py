@@ -19,13 +19,23 @@ if __name__ == '__main__':
         "marker" : {"count":0,"size":[]}
     }
     Entry = False
-    factor_size = 0.274
+    factor_size = 0.769
     while True:
         # capture image
         ret,raw_img = cap.read()
+        if raw_img is None:
+            break
         raw_img = cv2.resize(raw_img,(tWidth,tHeight))
-        for i in range(5):
-            cap.grab()
+        # for i in range(5):
+        #     cap.grab()
+        iloop = fps / 6 #Process x frames per second
+        while iloop:
+            cap.grab () #Only take frames without decoding,
+            iloop =iloop - 1
+            if iloop <1 :
+                break 
+            if cv2.waitKey(1) & 0xFF == ord('q'):
+                break
 
         if not ret:
             break
@@ -55,10 +65,10 @@ if __name__ == '__main__':
             ymin = bbox[0][0]*tHeight
             ymax = bbox[0][2]*tHeight     
             if xmin < int(sqsize/2+distance) and not Entry and xmin > int(sqsize/2-distance):
-                print('in')
+                # print('in')
                 Entry = True
             if xmin < int(sqsize/2-distance) and Entry:
-                print('out')
+                # print('out')
                 Entry = False
                 if class_id[0] == 1:
                     categoryList["lime"]["count"] = categoryList["lime"]["count"] + 1
