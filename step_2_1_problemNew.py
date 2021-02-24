@@ -20,8 +20,6 @@ detection_model = model_builder.build(model_config=model_config, is_training=Fal
 ckpt = tf.compat.v2.train.Checkpoint(model=detection_model)
 ckpt.restore(os.path.join(checkpoint_path, 'ckpt-1')).expect_partial()
 
-category_index = {1: {'id': 1, 'name': 'lime'}, 2: {'id': 2, 'name': 'marker'},}
-
 @tf.function
 def detect(image):
     """Detect objects in image."""
