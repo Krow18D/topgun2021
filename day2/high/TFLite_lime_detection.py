@@ -18,7 +18,7 @@ import argparse
 import cv2
 import numpy as np
 import time
-import requests
+# import requests
 import sys
 import importlib.util
 from statistics import mean
@@ -71,6 +71,7 @@ LABELMAP_NAME = args.labels
 VIDEO_NAME = args.video
 min_conf_threshold = float(args.threshold)
 use_TPU = args.edgetpu
+
 
 # Import TensorFlow libraries
 # If tflite_runtime is installed, import interpreter from tflite_runtime, else import from regular tensorflow
@@ -147,6 +148,7 @@ sqsize = 320
 
 Entry = False
 factor_size = 0.769
+imgName = "limecapture.jpg"
 
 categoryList = {
     "lime" : {"count":0,"size":[]},
@@ -226,11 +228,19 @@ while(video.isOpened()):
                 Entry = False
                 if int(classes[i]) == 0:
                     t = time.time()
+                    smallSize = 15000
+                    imgName = "limecapture.jpg"
                     categoryList["lime"]["count"] = categoryList["lime"]["count"] + 1
                     w = (xmax - xmin)*factor_size
                     h = (ymax - ymin)*factor_size
                     categoryList["lime"]["size"].append(w*h)
                     print(f'{t - start : .2f}' , 's : lime detected' , categoryList["lime"]["count"] , "size:" , w*h, " mm^2")
+                    # limeFlag = True
+                    if categoryList["lime"]["size"][categoryList["lime"]["count"] - 1] < smallSize:
+                        cv2.imwrite(imgName, frame)
+                        detectSend("Lime","S",imgName)
+                    else:
+                        detectSend("Lime","L","")
                 elif int(classes[i]) == 1:
                     t = time.time()
                     categoryList["marker"]["count"] = categoryList["marker"]["count"] + 1
@@ -238,19 +248,17 @@ while(video.isOpened()):
                     h = (ymax - ymin)*factor_size
                     categoryList["marker"]["size"].append(w*h)
                     print(f'{t - start : .2f}' , 's : marker detected' , categoryList["marker"]["count"] , "size:" , w*h, " mm^2")
-
+                    detectSend("Marker","L","")
     
     # All the results have been drawn on the frame, so it's time to display it.
     frame = cv2.resize(frame, (480, 320))
-    
-
-
-
+        
     cv2.imshow('TFLITE Lime detector', frame)
-
+    limeFlag = False
     # Press 'q' to quit
     if cv2.waitKey(1) == ord('q'):
         break
+    
 end_time = time.time()
 # Clean up
 video.release()
