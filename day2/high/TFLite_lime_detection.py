@@ -151,7 +151,8 @@ categoryList = {
 }
 
 distance = 80
-start = time.time()
+start_time = time.time()
+elapsed_time = []
 while(video.isOpened()):
 
     # Acquire frame and resize to expected shape [1xHxWx3]
