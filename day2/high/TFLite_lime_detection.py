@@ -18,6 +18,7 @@ import argparse
 import cv2
 import numpy as np
 import time
+
 import sys
 import importlib.util
 
@@ -25,10 +26,9 @@ def print_result(categoryList):
     print('Finished')
     print('found lime : ' , categoryList["lime"]["count"] , 'times')
     print('all limes size : ', categoryList["lime"]["size"])
-    print('detected time :', categoryList["lime"]["time"])
     print('found marker : ' , categoryList["marker"]["count"] , 'times')
     print('all markers size : ', categoryList["marker"]["size"])
-    print('detected time :', categoryList["marker"]["time"])
+
 
 
 # def overlay_objects(img):
@@ -146,12 +146,12 @@ Entry = False
 factor_size = 0.769
 
 categoryList = {
-    "lime" : {"count":0,"size":[],"time":[]},
-    "marker" : {"count":0,"size":[],"time":[]}
+    "lime" : {"count":0,"size":[]},
+    "marker" : {"count":0,"size":[]}
 }
 
 distance = 80
-start_time = time.time()
+start = time.time()
 while(video.isOpened()):
 
     # Acquire frame and resize to expected shape [1xHxWx3]
@@ -168,11 +168,13 @@ while(video.isOpened()):
     # Normalize pixel values if using a floating model (i.e. if model is non-quantized)
     if floating_model:
         input_data = (np.float32(input_data) - input_mean) / input_std
-        
+
+    start_elapsetime = time.time()
     # Perform the actual detection by running the model with the image as input
     interpreter.set_tensor(input_details[0]['index'],input_data)
     interpreter.invoke()
-
+    end_elapsetime = time.time()
+    elapsed_time.append( (end_elapsetime - start_elapsetime) )
     # Retrieve detection results
     boxes = interpreter.get_tensor(output_details[0]['index'])[0] # Bounding box coordinates of detected objects
     classes = interpreter.get_tensor(output_details[1]['index'])[0] # Class index of detected objects
@@ -181,11 +183,11 @@ while(video.isOpened()):
 
     # overlay with line
 
-    pt1 = ( int(imW/2-distance), 0 )
-    pt2 = ( int(imW/2-distance), int(imH) )
+    pt1 = ( int(2*imW/3-distance), 0 )
+    pt2 = ( int(2*imW/3-distance), int(imH) )
     cv2.line(frame, pt1, pt2, (0,0,255), 2)
-    pt1 = ( int(imW/2+distance), 0 ) 
-    pt2 = ( int(imW/2+distance), int(imH) )
+    pt1 = ( int(2*imW/3+distance), 0 ) 
+    pt2 = ( int(2*imW/3+distance), int(imH) )
     cv2.line(frame, pt1, pt2, (0,0,255), 2)
 
     # Loop over all detections and draw detection box if confidence is above minimum threshold
@@ -212,26 +214,26 @@ while(video.isOpened()):
 
 
             # if class_id.size != 0:    
-            if xmin < int(imW/2+distance) and not Entry and xmin > int(imW/2-distance):
+            if xmin < int(2*imW/3+distance) and not Entry and xmin > int(2*imW/3-distance):
                 # print('in')
                 Entry = True
-            if xmin < int(imW/2-distance) and Entry:
+            if xmin < int(2*imW/3-distance) and Entry:
                 # print('out')
                 Entry = False
                 if int(classes[i]) == 0:
+                    t = time.time()
                     categoryList["lime"]["count"] = categoryList["lime"]["count"] + 1
                     w = (xmax - xmin)*factor_size
                     h = (ymax - ymin)*factor_size
                     categoryList["lime"]["size"].append(w*h)
-                    categoryList["lime"]["time"].append(time.time()-start_time)
-                    print('lime detected' , categoryList["lime"]["count"] , "size:" , w*h , "at time : " ,time.time()-start_time)
+                    print(f'{t - start : .2f}' , 's : lime detected' , categoryList["lime"]["count"] , "size:" , w*h, " mm^2")
                 elif int(classes[i]) == 1:
+                    t = time.time()
                     categoryList["marker"]["count"] = categoryList["marker"]["count"] + 1
                     w = (xmax - xmin)*factor_size
                     h = (ymax - ymin)*factor_size
                     categoryList["marker"]["size"].append(w*h)
-                    categoryList["marker"]["time"].append(time.time()-start_time)
-                    print('marker detected' , categoryList["marker"]["count"] , "size:" , w*h , "at time : " ,time.time()-start_time)
+                    print(f'{t - start : .2f}' , 's : marker detected' , categoryList["marker"]["count"] , "size:" , w*h, " mm^2")
 
     
     # All the results have been drawn on the frame, so it's time to display it.
@@ -245,10 +247,12 @@ while(video.isOpened()):
     # Press 'q' to quit
     if cv2.waitKey(1) == ord('q'):
         break
-
+end_time = time.time()
 # Clean up
 video.release()
 print_result(categoryList)
+print('[Program] Usage time : ' , end_time-start_time , ' s')
+print('[Object] Average Detection time : ' , mean(elapsed_time) , ' s')
 cv2.destroyAllWindows()
 
 
