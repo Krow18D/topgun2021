@@ -18,9 +18,12 @@ import argparse
 import cv2
 import numpy as np
 import time
-
+import requests
 import sys
 import importlib.util
+from statistics import mean
+
+from apiFire import *
 
 def print_result(categoryList):
     print('Finished')
@@ -151,7 +154,7 @@ categoryList = {
 }
 
 distance = 80
-start_time = time.time()
+start = time.time()
 elapsed_time = []
 while(video.isOpened()):
 
@@ -252,7 +255,7 @@ end_time = time.time()
 # Clean up
 video.release()
 print_result(categoryList)
-print('[Program] Usage time : ' , end_time-start_time , ' s')
+print('[Program] Usage time : ' , end_time-start , ' s')
 print('[Object] Average Detection time : ' , mean(elapsed_time) , ' s')
 cv2.destroyAllWindows()
 

@@ -19,8 +19,6 @@ import cv2
 import numpy as np
 import sys
 import importlib.util
-import time
-from statistics import mean
 
 
 
@@ -35,7 +33,7 @@ parser.add_argument('--labels', help='Name of the labelmap file, if different th
 parser.add_argument('--threshold', help='Minimum confidence threshold for displaying detected objects',
                     default=0.75)
 parser.add_argument('--video', help='Name of the video file',
-                    default='test_clip.h264')
+                    default='test.mp4')
 parser.add_argument('--edgetpu', help='Use Coral Edge TPU Accelerator to speed up detection',
                     action='store_true')
 
@@ -64,7 +62,7 @@ else:
 # If using Edge TPU, assign filename for Edge TPU model
 if use_TPU:
     # If user has specified the name of the .tflite file, use that name, otherwise use default 'edgetpu.tflite'
-    if (GRAPH_NAME != 'detect.tflite'):
+    if (GRAPH_NAME == 'detect.tflite'):
         GRAPH_NAME = 'edgetpu.tflite'   
 
 # Get path to current working directory
@@ -72,7 +70,7 @@ CWD_PATH = os.getcwd()
 
 # Path to video file
 VIDEO_PATH = os.path.join(CWD_PATH,VIDEO_NAME)
-# print(VIDEO_PATH)
+
 # Path to .tflite file, which contains the model that is used for object detection
 PATH_TO_CKPT = os.path.join(CWD_PATH,MODEL_NAME,GRAPH_NAME)
 
@@ -113,22 +111,11 @@ input_std = 127.5
 
 # Open video file
 video = cv2.VideoCapture(VIDEO_PATH)
-fps = video.get(cv2.CAP_PROP_FPS)
 imW = video.get(cv2.CAP_PROP_FRAME_WIDTH)
 imH = video.get(cv2.CAP_PROP_FRAME_HEIGHT)
 
-elapsed_time = []
-start_time = time.time()
-
 while(video.isOpened()):
-    iloop = fps / 6 #Process x frames per second
-    while iloop:
-        video.grab () #Only take frames without decoding,
-        iloop =iloop - 1
-        if iloop <1 :
-            break 
-        if cv2.waitKey(1) & 0xFF == ord('q'):
-            break    
+
     # Acquire frame and resize to expected shape [1xHxWx3]
     ret, frame = video.read()
     if not ret:
@@ -144,12 +131,10 @@ while(video.isOpened()):
     if floating_model:
         input_data = (np.float32(input_data) - input_mean) / input_std
 
-    start_elapsetime = time.time()
     # Perform the actual detection by running the model with the image as input
     interpreter.set_tensor(input_details[0]['index'],input_data)
     interpreter.invoke()
-    end_elapsetime = time.time()
-    elapsed_time.append( (end_elapsetime - start_elapsetime) )
+
     # Retrieve detection results
     boxes = interpreter.get_tensor(output_details[0]['index'])[0] # Bounding box coordinates of detected objects
     classes = interpreter.get_tensor(output_details[1]['index'])[0] # Class index of detected objects
@@ -187,8 +172,5 @@ while(video.isOpened()):
 
 # Clean up
 video.release()
-end_time = time.time()
-print('[Program] Usage time : ' , end_time-start_time , ' s')
-print('[Object] Average Detection time : ' , mean(elapsed_time) , ' s')
 cv2.destroyAllWindows()
 

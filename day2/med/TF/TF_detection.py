@@ -3,6 +3,8 @@ import numpy as np
 import tensorflow as tf
 import os
 import time
+from statistics import mean
+
 from object_detection.utils import label_map_util
 from object_detection.utils import config_util
 from object_detection.utils import visualization_utils as viz_utils
@@ -21,8 +23,6 @@ ckpt = tf.compat.v2.train.Checkpoint(model=detection_model)
 ckpt.restore(os.path.join(checkpoint_path, 'ckpt-1')).expect_partial()
 
 category_index = {1: {'id': 1, 'name': 'lime'}, 2: {'id': 2, 'name': 'marker'},}
-sumDetectedTime = 0  
-numDetected = 0
 
 @tf.function
 def detect(image):
@@ -73,6 +73,9 @@ def overlay_objects(img):
         return plotimg
     return img.copy()
 
+
+
+
 if __name__ == '__main__':
     cap = cv2.VideoCapture('clips/test_clip.h264')
     fps = cap.get(cv2.CAP_PROP_FPS)
@@ -82,13 +85,19 @@ if __name__ == '__main__':
     # trainSize = 320
     tWidth = sqsize
     tHeight = int(height * (tWidth / width))
-    categoryList = {
-    "lime" : {"count":0,"size":[],"time":[]},
-    "marker" : {"count":0,"size":[],"time":[]}
-}
+
     Entry = False
+    elapsed_time = []
     start_time = time.time()
     while True:
+        iloop = fps / 6 #Process x frames per second
+        while iloop:
+            cap.grab () #Only take frames without decoding,
+            iloop =iloop - 1
+            if iloop <1 :
+                break 
+            if cv2.waitKey(1) & 0xFF == ord('q'):
+                break 
         # capture image
         ret,raw_img = cap.read()
         if raw_img is None:
@@ -106,19 +115,18 @@ if __name__ == '__main__':
             offset = int( (tHeight - tWidth)/2 )
             frame[:,offset:] = raw_img
         # problems
-        detected_time = time.time()
+        start_elapsetime = time.time()
         class_id, bbox = detect_objects(frame)
+        end_elapsetime = time.time()
+        elapsed_time.append( (end_elapsetime - start_elapsetime) )
         img = overlay_objects(frame)
-        if class_id.size != 0:
-            sumDetectedTime = sumDetectedTime + (time.time() - detected_time)
-            numDetected = numDetected + 1
-            print(sumDetectedTime , numDetected)
+
         # preview image
         cv2.imshow('Preview', img)     
         key = cv2.waitKey(int(1000/fps))
         if key == ord('q'):
             break
     end_time = time.time()
+    print('[Program] Usage time : ' , end_time-start_time , ' s')
+    print('[Object] Average Detection time : ' , mean(elapsed_time) , ' s')
     cap.release()
-    print("Average Time : " , sumDetectedTime/numDetected , " sec")
-    print("Run Time : ",end_time-start_time)
