@@ -24,6 +24,7 @@ import importlib.util
 from statistics import mean
 
 from apiFire import *
+from tgrMqttClass import *
 
 def print_result(categoryList):
     print('Finished')
@@ -239,6 +240,8 @@ while(video.isOpened()):
                     if categoryList["lime"]["size"][categoryList["lime"]["count"] - 1] < smallSize:
                         cv2.imwrite(imgName, frame)
                         detectSend("Lime","S",imgName)
+                        tgrMqtt = TGRMqtt("192.168.0.15", 1883, "tgr_user", "tgr_pass")
+                        tgrMqtt.publish("led/control","toggle1")
                     else:
                         detectSend("Lime","L","")
                 elif int(classes[i]) == 1:
